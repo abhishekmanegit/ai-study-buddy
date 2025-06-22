@@ -2,15 +2,39 @@
 
 import { useState } from "react";
 
+interface Message {
+  sender: "user" | "ai";
+  text: string;
+}
+
 export default function Home() {
   const [input, setInput] = useState("");
-  const [messages, setMessages] = useState<string[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  const handleSend = (e: React.FormEvent) => {
+  const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (input.trim()) {
-      setMessages([...messages, input]);
-      setInput("");
+    if (!input.trim()) return;
+    const userMessage = { sender: "user" as const, text: input };
+    setMessages((prev) => [...prev, userMessage]);
+    setInput("");
+    setLoading(true);
+    try {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: input }),
+      });
+      const data = await res.json();
+      if (data.reply) {
+        setMessages((prev) => [...prev, { sender: "ai", text: data.reply }]);
+      } else {
+        setMessages((prev) => [...prev, { sender: "ai", text: "Sorry, I couldn't get a response." }]);
+      }
+    } catch {
+      setMessages((prev) => [...prev, { sender: "ai", text: "Error contacting AI agent." }]);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -24,11 +48,12 @@ export default function Home() {
             <div className="text-gray-400 text-center">No messages yet. Start the conversation!</div>
           ) : (
             messages.map((msg, idx) => (
-              <div key={idx} className="mb-2 text-gray-800 bg-blue-50 rounded p-2">
-                <span className="font-semibold">You:</span> {msg}
+              <div key={idx} className={`mb-2 p-2 rounded ${msg.sender === "user" ? "bg-blue-50 text-gray-800 text-right" : "bg-green-50 text-gray-900 text-left"}`}>
+                <span className="font-semibold">{msg.sender === "user" ? "You" : "AI"}:</span> {msg.text}
               </div>
             ))
           )}
+          {loading && <div className="text-gray-400 text-center">AI is thinking...</div>}
         </div>
         <form onSubmit={handleSend} className="flex gap-2 mt-2">
           <input
@@ -38,12 +63,14 @@ export default function Home() {
             value={input}
             onChange={e => setInput(e.target.value)}
             autoFocus
+            disabled={loading}
           />
           <button
             type="submit"
             className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+            disabled={loading}
           >
-            Send
+            {loading ? "Sending..." : "Send"}
           </button>
         </form>
       </div>
