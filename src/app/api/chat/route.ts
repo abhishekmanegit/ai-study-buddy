@@ -5,31 +5,7 @@ export async function POST(req: NextRequest) {
   const apiKey = process.env.OPENAI_API_KEY;
 
   if (!apiKey) {
-
     return NextResponse.json({ error: 'Missing API key' }, { status: 500 });
-  }
-
-  const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model: 'mistralai/mixtral-8x7b-instruct',
-      messages: [
-        { role: 'system', content: 'You are a fun study buddy.' },
-        { role: 'user', content: message },
-      ],
-    }),
-  });
-
-  const data = await response.json();
-
-  return NextResponse.json({ reply: data.choices?.[0]?.message?.content ?? "No response." });
-} 
-=======
-    return NextResponse.json({ error: 'OpenAI API key not set.' }, { status: 500 });
   }
 
   try {
@@ -40,7 +16,7 @@ export async function POST(req: NextRequest) {
         'Authorization': `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: 'mistralai/mixtral-8x7b-instruct', // ✅ OpenRouter supported
+        model: 'mistralai/mixtral-8x7b-instruct',
         messages: [
           {
             role: 'system',
@@ -70,4 +46,3 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Error contacting OpenRouter: ' + (error?.message || error) }, { status: 500 });
   }
 }
->>>>>>> 103182c6f681a0bddc99235026d8c3704b82e028
