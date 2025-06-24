@@ -5,7 +5,7 @@ export async function POST(req: NextRequest) {
   const apiKey = process.env.OPENAI_API_KEY;
 
   if (!apiKey) {
-<<<<<<< HEAD
+
     return NextResponse.json({ error: 'Missing API key' }, { status: 500 });
   }
 
